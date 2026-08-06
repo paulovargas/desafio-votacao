@@ -1,6 +1,5 @@
 package com.sicredi.votacao.dto.response;
 
-
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,10 +7,10 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class PautaResponse {
+public class SessaoResponse {
 
     private Long id;
-    private String titulo;
-    private String descricao;
-    private LocalDateTime dataCriacao;
+    private Long pautaId;
+    private LocalDateTime dataHoraAbertura;
+    private LocalDateTime dataHoraEncerramento;
 }
