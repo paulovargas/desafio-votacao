@@ -5,6 +5,8 @@ import com.sicredi.votacao.dto.request.AbrirSessaoRequest;
 import com.sicredi.votacao.dto.response.SessaoResponse;
 import com.sicredi.votacao.entity.Pauta;
 import com.sicredi.votacao.entity.Sessao;
+import com.sicredi.votacao.exception.PautaNaoEncontradaException;
+import com.sicredi.votacao.exception.SessaoJaExisteException;
 import com.sicredi.votacao.repository.PautaRepository;
 import com.sicredi.votacao.repository.SessaoRepository;
 import org.springframework.stereotype.Service;
@@ -27,10 +29,10 @@ public class SessaoService {
     public SessaoResponse abrirSessao(Long pautaId, AbrirSessaoRequest request){
 
         Pauta pauta = pautaRepository.findById(pautaId)
-                .orElseThrow(() -> new RuntimeException("Pauta não encontrada."));
+                .orElseThrow(() -> new PautaNaoEncontradaException(pautaId));
 
         if(sessaoRepository.existsByPauta(pauta)){
-            throw new RuntimeException("Já existe uma sessão para esta pauta.");
+            throw new SessaoJaExisteException(pautaId);
         }
 
         LocalDateTime abertura = LocalDateTime.now();

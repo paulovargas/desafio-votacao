@@ -29,7 +29,6 @@ public class PautaService {
                 .titulo(pauta.getTitulo())
                 .descricao(pauta.getDescricao())
                 .dataCriacao(pauta.getDataCriacao())
-                .dataCriacao(pauta.getDataCriacao())
                 .build();
     }
 }

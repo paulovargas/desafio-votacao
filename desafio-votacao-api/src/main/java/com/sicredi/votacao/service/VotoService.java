@@ -7,6 +7,10 @@ import com.sicredi.votacao.entity.Pauta;
 import com.sicredi.votacao.entity.Sessao;
 import com.sicredi.votacao.entity.Voto;
 import com.sicredi.votacao.enums.OpcaoVoto;
+import com.sicredi.votacao.exception.AssociadoJaVotouException;
+import com.sicredi.votacao.exception.PautaNaoEncontradaException;
+import com.sicredi.votacao.exception.SessaoEncerradaException;
+import com.sicredi.votacao.exception.SessaoNaoEncontradaException;
 import com.sicredi.votacao.repository.PautaRepository;
 import com.sicredi.votacao.repository.SessaoRepository;
 import com.sicredi.votacao.repository.VotoRepository;
@@ -33,17 +37,17 @@ public class VotoService {
 
     public VotoResponse votar(Long pautaId, RegistrarVotoRequest request){
         Pauta pauta = pautaRepository.findById(pautaId)
-                .orElseThrow(() -> new RuntimeException("Pauta não encontrada"));
+                .orElseThrow(() -> new PautaNaoEncontradaException(pautaId));
 
         Sessao sessao = sessaoRepository.findByPauta(pauta)
-                .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
+                .orElseThrow(() -> new SessaoNaoEncontradaException(pautaId));
 
         if (LocalDateTime.now().isAfter(sessao.getFim())){
-            throw new RuntimeException("Sessão encerrada");
+            throw new SessaoEncerradaException();
         }
 
         if (votoRepository.existsByPautaAndAssociadoId(pauta, request.getAssociadoId())){
-            throw new RuntimeException("Associado já votou nesta pauta");
+            throw new AssociadoJaVotouException(request.getAssociadoId(), pautaId);
         }
 
         Voto voto = new Voto();
@@ -65,7 +69,7 @@ public class VotoService {
     public ResultadoVotacaoResponse obterResultado(Long pautaId){
 
         Pauta pauta = pautaRepository.findById(pautaId)
-                .orElseThrow(() -> new RuntimeException("Pauta não encontrada"));
+                .orElseThrow(() -> new PautaNaoEncontradaException(pautaId));
 
         long votosSim = votoRepository.countByPautaAndVoto(pauta, OpcaoVoto.SIM);
 
