@@ -1,10 +1,12 @@
 package com.sicredi.votacao.service;
 
 import com.sicredi.votacao.dto.request.RegistrarVotoRequest;
+import com.sicredi.votacao.dto.response.ResultadoVotacaoResponse;
 import com.sicredi.votacao.dto.response.VotoResponse;
 import com.sicredi.votacao.entity.Pauta;
 import com.sicredi.votacao.entity.Sessao;
 import com.sicredi.votacao.entity.Voto;
+import com.sicredi.votacao.enums.OpcaoVoto;
 import com.sicredi.votacao.repository.PautaRepository;
 import com.sicredi.votacao.repository.SessaoRepository;
 import com.sicredi.votacao.repository.VotoRepository;
@@ -58,5 +60,36 @@ public class VotoService {
                 .voto(voto.getVoto())
                 .dataHora(voto.getDataHora())
                 .build();
+    }
+
+    public ResultadoVotacaoResponse obterResultado(Long pautaId){
+
+        Pauta pauta = pautaRepository.findById(pautaId)
+                .orElseThrow(() -> new RuntimeException("Pauta não encontrada"));
+
+        long votosSim = votoRepository.countByPautaAndVoto(pauta, OpcaoVoto.SIM);
+
+        long votosNao = votoRepository.countByPautaAndVoto(pauta, OpcaoVoto.NAO);
+
+        long totalVotos = votosSim + votosNao;
+
+        String resultado;
+
+        if (votosSim > votosNao) {
+            resultado = "APROVADA";
+        } else if (votosNao > votosSim) {
+            resultado = "REPROVADA";
+        } else {
+            resultado = "EMPATE";
+        }
+
+        return new ResultadoVotacaoResponse(
+                pauta.getId(),
+                pauta.getTitulo(),
+                votosSim,
+                votosNao,
+                totalVotos,
+                resultado
+        );
     }
 }
