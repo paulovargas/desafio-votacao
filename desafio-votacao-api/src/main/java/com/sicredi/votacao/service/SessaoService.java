@@ -5,6 +5,7 @@ import com.sicredi.votacao.dto.request.AbrirSessaoRequest;
 import com.sicredi.votacao.dto.response.SessaoResponse;
 import com.sicredi.votacao.entity.Pauta;
 import com.sicredi.votacao.entity.Sessao;
+import com.sicredi.votacao.exception.DuracaoSessaoInvalidaException;
 import com.sicredi.votacao.exception.PautaNaoEncontradaException;
 import com.sicredi.votacao.exception.SessaoJaExisteException;
 import com.sicredi.votacao.repository.PautaRepository;
@@ -28,6 +29,8 @@ public class SessaoService {
 
     public SessaoResponse abrirSessao(Long pautaId, AbrirSessaoRequest request){
 
+        long duracao = obterDuracaoMinutos(request);
+
         Pauta pauta = pautaRepository.findById(pautaId)
                 .orElseThrow(() -> new PautaNaoEncontradaException(pautaId));
 
@@ -36,8 +39,6 @@ public class SessaoService {
         }
 
         LocalDateTime abertura = LocalDateTime.now();
-
-        long duracao = request.getDuracaoMinutos() == null ? 1 : request.getDuracaoMinutos();
 
         LocalDateTime encerramento = abertura.plusMinutes(duracao);
 
@@ -54,5 +55,17 @@ public class SessaoService {
                 .dataHoraAbertura(sessao.getInicio())
                 .dataHoraEncerramento(sessao.getFim())
                 .build();
+    }
+
+    private long obterDuracaoMinutos(AbrirSessaoRequest request) {
+        if (request == null || request.getDuracaoMinutos() == null) {
+            return 1L;
+        }
+
+        if (request.getDuracaoMinutos() <= 0) {
+            throw new DuracaoSessaoInvalidaException();
+        }
+
+        return request.getDuracaoMinutos();
     }
 }

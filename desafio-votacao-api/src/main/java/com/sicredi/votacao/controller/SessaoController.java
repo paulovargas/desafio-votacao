@@ -6,6 +6,8 @@ import com.sicredi.votacao.service.SessaoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/api/v1/pautas")
 public class SessaoController {
@@ -17,8 +19,10 @@ public class SessaoController {
     }
 
     @PostMapping("/{id}/sessao")
-    public ResponseEntity<SessaoResponse> abrirSesao(@PathVariable Long id,
-                                                     @RequestBody(required = false)AbrirSessaoRequest request){
+    public ResponseEntity<SessaoResponse> abrirSesao(
+            @PathVariable Long id,
+            @RequestBody(required = false)
+            @Valid AbrirSessaoRequest request){
 
         if(request == null){
             request = new AbrirSessaoRequest();

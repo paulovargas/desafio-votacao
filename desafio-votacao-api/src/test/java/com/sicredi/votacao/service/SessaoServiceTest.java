@@ -4,6 +4,7 @@ import com.sicredi.votacao.dto.request.AbrirSessaoRequest;
 import com.sicredi.votacao.dto.response.SessaoResponse;
 import com.sicredi.votacao.entity.Pauta;
 import com.sicredi.votacao.entity.Sessao;
+import com.sicredi.votacao.exception.DuracaoSessaoInvalidaException;
 import com.sicredi.votacao.repository.PautaRepository;
 import com.sicredi.votacao.repository.SessaoRepository;
 import org.junit.Test;
@@ -71,6 +72,22 @@ public class SessaoServiceTest {
         SessaoResponse response = sessaoService.abrirSessao(1L, request);
 
         assertEquals(5L, Duration.between(response.getDataHoraAbertura(), response.getDataHoraEncerramento()).toMinutes());
+    }
+
+    @Test(expected = DuracaoSessaoInvalidaException.class)
+    public void naoDeveAbrirSessaoComDuracaoZero() {
+        AbrirSessaoRequest request = new AbrirSessaoRequest();
+        request.setDuracaoMinutos(0L);
+
+        sessaoService.abrirSessao(1L, request);
+    }
+
+    @Test(expected = DuracaoSessaoInvalidaException.class)
+    public void naoDeveAbrirSessaoComDuracaoNegativa() {
+        AbrirSessaoRequest request = new AbrirSessaoRequest();
+        request.setDuracaoMinutos(-1L);
+
+        sessaoService.abrirSessao(1L, request);
     }
 
     @Test(expected = RuntimeException.class)
