@@ -14,6 +14,8 @@ import com.sicredi.votacao.exception.SessaoNaoEncontradaException;
 import com.sicredi.votacao.repository.PautaRepository;
 import com.sicredi.votacao.repository.SessaoRepository;
 import com.sicredi.votacao.repository.VotoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -22,6 +24,8 @@ import java.time.LocalDateTime;
 @Service
 @Transactional
 public class VotoService {
+
+    private static final Logger logger = LoggerFactory.getLogger(VotoService.class);
 
     private final VotoRepository votoRepository;
     private final PautaRepository pautaRepository;
@@ -36,6 +40,8 @@ public class VotoService {
     }
 
     public VotoResponse votar(Long pautaId, RegistrarVotoRequest request){
+        logger.info("Iniciando registro de voto. pautaId={}", pautaId);
+
         Pauta pauta = pautaRepository.findById(pautaId)
                 .orElseThrow(() -> new PautaNaoEncontradaException(pautaId));
 
@@ -43,10 +49,12 @@ public class VotoService {
                 .orElseThrow(() -> new SessaoNaoEncontradaException(pautaId));
 
         if (LocalDateTime.now().isAfter(sessao.getFim())){
+            logger.warn("Registro de voto rejeitado: sessao encerrada. pautaId={}", pautaId);
             throw new SessaoEncerradaException();
         }
 
         if (votoRepository.existsByPautaAndAssociadoId(pauta, request.getAssociadoId())){
+            logger.warn("Registro de voto rejeitado: associado ja votou. pautaId={}", pautaId);
             throw new AssociadoJaVotouException(request.getAssociadoId(), pautaId);
         }
 
@@ -56,6 +64,8 @@ public class VotoService {
         voto.setVoto(request.getVoto());
 
         voto = votoRepository.save(voto);
+
+        logger.info("Voto registrado com sucesso. votoId={}, pautaId={}", voto.getId(), pauta.getId());
 
         return VotoResponse.builder()
                 .id(voto.getId())
@@ -67,6 +77,8 @@ public class VotoService {
     }
 
     public ResultadoVotacaoResponse obterResultado(Long pautaId){
+
+        logger.info("Iniciando apuracao de resultado. pautaId={}", pautaId);
 
         Pauta pauta = pautaRepository.findById(pautaId)
                 .orElseThrow(() -> new PautaNaoEncontradaException(pautaId));
@@ -86,6 +98,9 @@ public class VotoService {
         } else {
             resultado = "EMPATE";
         }
+
+        logger.info("Resultado apurado. pautaId={}, totalVotos={}, resultado={}",
+                pauta.getId(), totalVotos, resultado);
 
         return new ResultadoVotacaoResponse(
                 pauta.getId(),
