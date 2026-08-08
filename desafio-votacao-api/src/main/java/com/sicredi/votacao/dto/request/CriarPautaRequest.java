@@ -10,7 +10,7 @@ import javax.validation.constraints.Size;
 @Setter
 public class CriarPautaRequest {
 
-    @NotBlank(message = "O título é obrigatório !")
+    @NotBlank(message = "O título é obrigatório!")
     @Size(max = 200)
     private String titulo;
 

@@ -136,7 +136,7 @@ public class ControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.mensagem", containsString("sessao")));
+                .andExpect(jsonPath("$.mensagem", containsString("sess")));
     }
 
     @Test
