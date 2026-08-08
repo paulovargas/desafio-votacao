@@ -1,5 +1,6 @@
 package com.sicredi.votacao.service;
 
+import com.sicredi.votacao.client.CpfVotoClient;
 import com.sicredi.votacao.dto.request.RegistrarVotoRequest;
 import com.sicredi.votacao.dto.response.ResultadoVotacaoResponse;
 import com.sicredi.votacao.dto.response.VotoResponse;
@@ -7,6 +8,9 @@ import com.sicredi.votacao.entity.Pauta;
 import com.sicredi.votacao.entity.Sessao;
 import com.sicredi.votacao.entity.Voto;
 import com.sicredi.votacao.enums.OpcaoVoto;
+import com.sicredi.votacao.enums.StatusCpfVoto;
+import com.sicredi.votacao.exception.AssociadoNaoPodeVotarException;
+import com.sicredi.votacao.exception.CpfInvalidoException;
 import com.sicredi.votacao.repository.PautaRepository;
 import com.sicredi.votacao.repository.SessaoRepository;
 import com.sicredi.votacao.repository.VotoRepository;
@@ -35,6 +39,9 @@ public class VotoServiceTest {
     @Mock
     private SessaoRepository sessaoRepository;
 
+    @Mock
+    private CpfVotoClient cpfVotoClient;
+
     @InjectMocks
     private VotoService votoService;
 
@@ -46,6 +53,7 @@ public class VotoServiceTest {
 
         when(pautaRepository.findById(1L)).thenReturn(Optional.of(pauta));
         when(sessaoRepository.findByPauta(pauta)).thenReturn(Optional.of(sessao));
+        when(cpfVotoClient.verificar("12345678901")).thenReturn(StatusCpfVoto.ABLE_TO_VOTE);
         when(votoRepository.existsByPautaAndAssociadoId(pauta, 100L)).thenReturn(false);
         when(votoRepository.save(any(Voto.class))).thenAnswer(invocation -> {
             Voto voto = invocation.getArgument(0);
@@ -100,7 +108,32 @@ public class VotoServiceTest {
 
         when(pautaRepository.findById(1L)).thenReturn(Optional.of(pauta));
         when(sessaoRepository.findByPauta(pauta)).thenReturn(Optional.of(sessao));
+        when(cpfVotoClient.verificar("12345678901")).thenReturn(StatusCpfVoto.ABLE_TO_VOTE);
         when(votoRepository.existsByPautaAndAssociadoId(pauta, 100L)).thenReturn(true);
+
+        votoService.votar(1L, criarRequestVoto(100L, OpcaoVoto.SIM));
+    }
+
+    @Test(expected = CpfInvalidoException.class)
+    public void naoDeveVotarQuandoCpfInvalido() {
+        Pauta pauta = criarPauta();
+        Sessao sessao = criarSessaoAberta(pauta);
+
+        when(pautaRepository.findById(1L)).thenReturn(Optional.of(pauta));
+        when(sessaoRepository.findByPauta(pauta)).thenReturn(Optional.of(sessao));
+        when(cpfVotoClient.verificar("12345678901")).thenThrow(new CpfInvalidoException("12345678901"));
+
+        votoService.votar(1L, criarRequestVoto(100L, OpcaoVoto.SIM));
+    }
+
+    @Test(expected = AssociadoNaoPodeVotarException.class)
+    public void naoDeveVotarQuandoCpfNaoEstaHabilitado() {
+        Pauta pauta = criarPauta();
+        Sessao sessao = criarSessaoAberta(pauta);
+
+        when(pautaRepository.findById(1L)).thenReturn(Optional.of(pauta));
+        when(sessaoRepository.findByPauta(pauta)).thenReturn(Optional.of(sessao));
+        when(cpfVotoClient.verificar("12345678901")).thenReturn(StatusCpfVoto.UNABLE_TO_VOTE);
 
         votoService.votar(1L, criarRequestVoto(100L, OpcaoVoto.SIM));
     }
@@ -176,6 +209,7 @@ public class VotoServiceTest {
     private RegistrarVotoRequest criarRequestVoto(Long associadoId, OpcaoVoto opcaoVoto) {
         RegistrarVotoRequest request = new RegistrarVotoRequest();
         request.setAssociadoId(associadoId);
+        request.setCpf("12345678901");
         request.setVoto(opcaoVoto);
         return request;
     }

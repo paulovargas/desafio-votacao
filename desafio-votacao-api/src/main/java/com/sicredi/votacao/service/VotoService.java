@@ -1,5 +1,6 @@
 package com.sicredi.votacao.service;
 
+import com.sicredi.votacao.client.CpfVotoClient;
 import com.sicredi.votacao.dto.request.RegistrarVotoRequest;
 import com.sicredi.votacao.dto.response.ResultadoVotacaoResponse;
 import com.sicredi.votacao.dto.response.VotoResponse;
@@ -7,7 +8,9 @@ import com.sicredi.votacao.entity.Pauta;
 import com.sicredi.votacao.entity.Sessao;
 import com.sicredi.votacao.entity.Voto;
 import com.sicredi.votacao.enums.OpcaoVoto;
+import com.sicredi.votacao.enums.StatusCpfVoto;
 import com.sicredi.votacao.exception.AssociadoJaVotouException;
+import com.sicredi.votacao.exception.AssociadoNaoPodeVotarException;
 import com.sicredi.votacao.exception.PautaNaoEncontradaException;
 import com.sicredi.votacao.exception.SessaoEncerradaException;
 import com.sicredi.votacao.exception.SessaoNaoEncontradaException;
@@ -30,13 +33,16 @@ public class VotoService {
     private final VotoRepository votoRepository;
     private final PautaRepository pautaRepository;
     private final SessaoRepository sessaoRepository;
+    private final CpfVotoClient cpfVotoClient;
 
     public VotoService(VotoRepository votoRepository,
                        PautaRepository pautaRepository,
-                       SessaoRepository sessaoRepository){
+                       SessaoRepository sessaoRepository,
+                       CpfVotoClient cpfVotoClient){
         this.votoRepository = votoRepository;
         this.pautaRepository = pautaRepository;
         this.sessaoRepository = sessaoRepository;
+        this.cpfVotoClient = cpfVotoClient;
     }
 
     public VotoResponse votar(Long pautaId, RegistrarVotoRequest request){
@@ -51,6 +57,13 @@ public class VotoService {
         if (LocalDateTime.now().isAfter(sessao.getFim())){
             logger.warn("Registro de voto rejeitado: sessao encerrada. pautaId={}", pautaId);
             throw new SessaoEncerradaException();
+        }
+
+        StatusCpfVoto statusCpf = cpfVotoClient.verificar(request.getCpf());
+
+        if (StatusCpfVoto.UNABLE_TO_VOTE.equals(statusCpf)) {
+            logger.warn("Registro de voto rejeitado: CPF nao habilitado para votar. pautaId={}", pautaId);
+            throw new AssociadoNaoPodeVotarException(request.getCpf());
         }
 
         if (votoRepository.existsByPautaAndAssociadoId(pauta, request.getAssociadoId())){

@@ -4,6 +4,7 @@ import com.sicredi.votacao.enums.OpcaoVoto;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Getter
@@ -12,6 +13,9 @@ public class RegistrarVotoRequest {
 
     @NotNull
     private Long associadoId;
+
+    @NotBlank
+    private String cpf;
 
     @NotNull
     private OpcaoVoto voto;
@@ -22,6 +26,14 @@ public class RegistrarVotoRequest {
 
     public void setAssociadoId(Long associadoId){
         this.associadoId = associadoId;
+    }
+
+    public String getCpf(){
+        return cpf;
+    }
+
+    public void setCpf(String cpf){
+        this.cpf = cpf;
     }
 
     public OpcaoVoto getVoto(){

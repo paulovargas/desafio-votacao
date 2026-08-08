@@ -7,6 +7,8 @@ import com.sicredi.votacao.dto.response.SessaoResponse;
 import com.sicredi.votacao.dto.response.VotoResponse;
 import com.sicredi.votacao.enums.OpcaoVoto;
 import com.sicredi.votacao.exception.AssociadoJaVotouException;
+import com.sicredi.votacao.exception.AssociadoNaoPodeVotarException;
+import com.sicredi.votacao.exception.CpfInvalidoException;
 import com.sicredi.votacao.exception.PautaNaoEncontradaException;
 import com.sicredi.votacao.exception.SessaoJaExisteException;
 import com.sicredi.votacao.service.PautaService;
@@ -151,6 +153,7 @@ public class ControllerTest {
 
         Map<String, Object> request = new HashMap<>();
         request.put("associadoId", 100L);
+        request.put("cpf", "12345678901");
         request.put("voto", "SIM");
 
         mockMvc.perform(post("/api/v1/pautas/1/votos")
@@ -167,6 +170,7 @@ public class ControllerTest {
 
         Map<String, Object> request = new HashMap<>();
         request.put("associadoId", 100L);
+        request.put("cpf", "12345678901");
         request.put("voto", "SIM");
 
         mockMvc.perform(post("/api/v1/pautas/1/votos")
@@ -174,6 +178,38 @@ public class ControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    public void naoDeveRegistrarVotoComCpfInvalido() throws Exception {
+        when(votoService.votar(eq(1L), any())).thenThrow(new CpfInvalidoException("12345678901"));
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("associadoId", 100L);
+        request.put("cpf", "12345678901");
+        request.put("voto", "SIM");
+
+        mockMvc.perform(post("/api/v1/pautas/1/votos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    public void naoDeveRegistrarVotoQuandoCpfNaoEstaHabilitado() throws Exception {
+        when(votoService.votar(eq(1L), any())).thenThrow(new AssociadoNaoPodeVotarException("12345678901"));
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("associadoId", 100L);
+        request.put("cpf", "12345678901");
+        request.put("voto", "SIM");
+
+        mockMvc.perform(post("/api/v1/pautas/1/votos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
     }
 
     @Test

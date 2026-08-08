@@ -74,6 +74,30 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(CpfInvalidoException.class)
+    public ResponseEntity<ErroResponse> handleCpfInvalido(
+            CpfInvalidoException exception,
+            WebRequest request){
+
+        return criarResposta(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(AssociadoNaoPodeVotarException.class)
+    public ResponseEntity<ErroResponse> handleAssociadoNaoPodeVotar(
+            AssociadoNaoPodeVotarException exception,
+            WebRequest request){
+
+        return criarResposta(
+                HttpStatus.FORBIDDEN,
+                exception.getMessage(),
+                request
+        );
+    }
+
     @ExceptionHandler(DuracaoSessaoInvalidaException.class)
     public ResponseEntity<ErroResponse> handleDuracaoSessaoInvalida(
             DuracaoSessaoInvalidaException exception,
