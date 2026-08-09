@@ -21,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -40,8 +41,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = {
         PautaController.class,
         SessaoController.class,
-        VotoController.class
+        VotoController.class,
+        MobileTelaController.class
 })
+@TestPropertySource(properties = "app.callback-base-url=http://api.test")
 public class ControllerTest {
 
     @Autowired
@@ -237,5 +240,38 @@ public class ControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.erro").value("Not Found"));
+    }
+
+    @Test
+    public void deveObterTelaMobileNovaPauta() throws Exception {
+        mockMvc.perform(get("/api/v1/mobile/telas/nova-pauta"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("nova-pauta"))
+                .andExpect(jsonPath("$.tipo").value("FORMULARIO"))
+                .andExpect(jsonPath("$.itens[0].id").value("titulo"))
+                .andExpect(jsonPath("$.acoes[0].metodo").value("POST"))
+                .andExpect(jsonPath("$.acoes[0].url").value("http://api.test/api/v1/pautas"));
+    }
+
+    @Test
+    public void deveObterTelaMobileVotar() throws Exception {
+        mockMvc.perform(get("/api/v1/mobile/telas/votar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tipo").value("FORMULARIO"))
+                .andExpect(jsonPath("$.itens[0].id").value("pautaId"))
+                .andExpect(jsonPath("$.itens[3].id").value("voto"))
+                .andExpect(jsonPath("$.itens[3].opcoes[0]").value("SIM"))
+                .andExpect(jsonPath("$.itens[3].opcoes[1]").value("NAO"))
+                .andExpect(jsonPath("$.acoes[0].url").value("http://api.test/api/v1/pautas/{pautaId}/votos"));
+    }
+
+    @Test
+    public void deveObterTelaMobileSelecaoDeOpcoes() throws Exception {
+        mockMvc.perform(get("/api/v1/mobile/telas/opcoes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tipo").value("SELECAO"))
+                .andExpect(jsonPath("$.opcoes[0].id").value("nova-pauta"))
+                .andExpect(jsonPath("$.opcoes[0].metodo").value("GET"))
+                .andExpect(jsonPath("$.opcoes[0].url").value("http://api.test/api/v1/mobile/telas/nova-pauta"));
     }
 }
