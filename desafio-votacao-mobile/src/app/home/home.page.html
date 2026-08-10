@@ -1,0 +1,204 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Votacao</ion-title>
+    <ion-buttons slot="end">
+      <ion-chip [color]="status() === 'erro' ? 'danger' : status() === 'sucesso' ? 'success' : 'medium'">
+        {{ statusLabel() }}
+      </ion-chip>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <section class="page">
+    <ion-card class="hero-card">
+      <ion-card-header>
+        <ion-card-title>Assembleia digital</ion-card-title>
+        <ion-card-subtitle>Escolha uma pauta para participar da votacao</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content class="hero-actions">
+        <ion-button (click)="carregarPautas()" [disabled]="carregando()">
+          <ion-icon name="refresh-outline" slot="start"></ion-icon>
+          Atualizar pautas
+        </ion-button>
+        <ion-button fill="outline" (click)="mostrandoCadastro.set(!mostrandoCadastro())">
+          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+          Nova pauta
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-accordion-group>
+      <ion-accordion value="settings">
+        <ion-item slot="header" color="light">
+          <ion-icon name="settings-outline" slot="start"></ion-icon>
+          <ion-label>Configuracao da API</ion-label>
+          <ion-note slot="end">localhost:8080</ion-note>
+        </ion-item>
+        <div class="accordion-content" slot="content">
+          <ion-input
+            label="Base URL"
+            label-placement="stacked"
+            fill="outline"
+            type="url"
+            [ngModel]="apiBaseUrl()"
+            (ngModelChange)="salvarApiBaseUrl($event)"
+          ></ion-input>
+          <ion-button fill="clear" size="small" (click)="carregarContratoMobile()">
+            Ver JSON mobile do Anexo 1
+          </ion-button>
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
+
+    <ion-card *ngIf="mostrandoCadastro()">
+      <ion-card-header>
+        <ion-card-title>Cadastrar pauta</ion-card-title>
+        <ion-card-subtitle>Crie uma nova decisao para votacao</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content class="form-grid">
+        <ion-input
+          label="Titulo"
+          label-placement="stacked"
+          fill="outline"
+          [(ngModel)]="pauta.titulo"
+          maxlength="200"
+          required
+        ></ion-input>
+        <ion-textarea
+          label="Descricao"
+          label-placement="stacked"
+          fill="outline"
+          [(ngModel)]="pauta.descricao"
+          [autoGrow]="true"
+          maxlength="1000"
+        ></ion-textarea>
+        <ion-button expand="block" (click)="criarPauta()" [disabled]="carregando() || !pauta.titulo">
+          <ion-icon name="send-outline" slot="start"></ion-icon>
+          Publicar pauta
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <section class="section-title">
+      <div>
+        <h2>Pautas</h2>
+        <p>{{ pautas().length }} pauta(s) cadastrada(s)</p>
+      </div>
+      <ion-spinner *ngIf="carregando()" name="crescent"></ion-spinner>
+    </section>
+
+    <ion-card *ngIf="pautas().length === 0 && !carregando()" class="empty-card">
+      <ion-card-content>
+        Nenhuma pauta cadastrada. Crie uma nova pauta para iniciar a votacao.
+      </ion-card-content>
+    </ion-card>
+
+    <ion-list class="pauta-list" *ngIf="pautas().length > 0">
+      <ion-card
+        *ngFor="let item of pautas()"
+        class="pauta-card"
+        [class.selected]="pautaSelecionada()?.id === item.id"
+        (click)="selecionarPauta(item)"
+      >
+        <ion-card-header>
+          <div class="card-title-row">
+            <ion-card-title>{{ item.titulo }}</ion-card-title>
+            <ion-badge color="primary">#{{ item.id }}</ion-badge>
+          </div>
+          <ion-card-subtitle>Criada em {{ dataCurta(item.dataCriacao) }}</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="descricao">{{ item.descricao || 'Sem descricao.' }}</p>
+          <div class="action-row">
+            <ion-button size="small" fill="outline" (click)="selecionarPauta(item, 'sessao'); $event.stopPropagation()">
+              <ion-icon name="time-outline" slot="start"></ion-icon>
+              Abrir
+            </ion-button>
+            <ion-button size="small" (click)="selecionarPauta(item, 'voto'); $event.stopPropagation()">
+              <ion-icon name="create-outline" slot="start"></ion-icon>
+              Votar
+            </ion-button>
+            <ion-button size="small" fill="outline" (click)="selecionarPauta(item, 'resultado'); consultarResultado(); $event.stopPropagation()">
+              <ion-icon name="eye-outline" slot="start"></ion-icon>
+              Resultado
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </ion-list>
+
+    <ion-card *ngIf="pautaSelecionada() && acaoSelecionada()" class="action-card">
+      <ion-card-header>
+        <ion-card-title>{{ pautaSelecionada()?.titulo }}</ion-card-title>
+        <ion-card-subtitle *ngIf="acaoSelecionada() === 'sessao'">Abrir sessao de votacao</ion-card-subtitle>
+        <ion-card-subtitle *ngIf="acaoSelecionada() === 'voto'">Registrar voto do associado</ion-card-subtitle>
+        <ion-card-subtitle *ngIf="acaoSelecionada() === 'resultado'">Resultado da pauta selecionada</ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content class="form-grid" *ngIf="acaoSelecionada() === 'sessao'">
+        <ion-input
+          label="Duracao em minutos"
+          label-placement="stacked"
+          fill="outline"
+          type="number"
+          [(ngModel)]="sessao.duracaoMinutos"
+        ></ion-input>
+        <ion-button expand="block" (click)="abrirSessao()" [disabled]="carregando()">
+          <ion-icon name="time-outline" slot="start"></ion-icon>
+          Abrir sessao
+        </ion-button>
+      </ion-card-content>
+
+      <ion-card-content class="form-grid" *ngIf="acaoSelecionada() === 'voto'">
+        <ion-input
+          label="Id do associado"
+          label-placement="stacked"
+          fill="outline"
+          type="number"
+          [(ngModel)]="voto.associadoId"
+          required
+        ></ion-input>
+        <ion-input
+          label="CPF"
+          label-placement="stacked"
+          fill="outline"
+          inputmode="numeric"
+          [(ngModel)]="voto.cpf"
+          required
+        ></ion-input>
+        <ion-select label="Voto" label-placement="stacked" fill="outline" [(ngModel)]="voto.voto">
+          <ion-select-option value="SIM">SIM</ion-select-option>
+          <ion-select-option value="NAO">NAO</ion-select-option>
+        </ion-select>
+        <ion-button
+          expand="block"
+          (click)="registrarVoto()"
+          [disabled]="carregando() || !voto.associadoId || !voto.cpf"
+        >
+          <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+          Confirmar voto
+        </ion-button>
+      </ion-card-content>
+
+      <ion-card-content *ngIf="acaoSelecionada() === 'resultado'">
+        <ion-button expand="block" (click)="consultarResultado()" [disabled]="carregando()">
+          <ion-icon name="refresh-outline" slot="start"></ion-icon>
+          Atualizar resultado
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-accordion-group>
+      <ion-accordion value="response">
+        <ion-item slot="header" color="light">
+          <ion-label>Ultima resposta da API</ion-label>
+          <ion-note slot="end">{{ carregando() ? 'Carregando' : 'JSON' }}</ion-note>
+        </ion-item>
+        <div class="response" slot="content">
+          <pre>{{ formatarResposta() }}</pre>
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
+  </section>
+</ion-content>
