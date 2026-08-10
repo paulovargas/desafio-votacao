@@ -42,7 +42,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         PautaController.class,
         SessaoController.class,
         VotoController.class,
-        MobileTelaController.class
+        MobileTelaController.class,
+        MobileAcaoController.class
 })
 @TestPropertySource(properties = "app.callback-base-url=http://api.test")
 public class ControllerTest {
@@ -250,7 +251,7 @@ public class ControllerTest {
                 .andExpect(jsonPath("$.tipo").value("FORMULARIO"))
                 .andExpect(jsonPath("$.itens[0].id").value("titulo"))
                 .andExpect(jsonPath("$.acoes[0].metodo").value("POST"))
-                .andExpect(jsonPath("$.acoes[0].url").value("http://api.test/api/v1/pautas"));
+                .andExpect(jsonPath("$.acoes[0].url").value("http://api.test/api/v1/mobile/acoes/nova-pauta"));
     }
 
     @Test
@@ -262,7 +263,8 @@ public class ControllerTest {
                 .andExpect(jsonPath("$.itens[3].id").value("voto"))
                 .andExpect(jsonPath("$.itens[3].opcoes[0]").value("SIM"))
                 .andExpect(jsonPath("$.itens[3].opcoes[1]").value("NAO"))
-                .andExpect(jsonPath("$.acoes[0].url").value("http://api.test/api/v1/pautas/{pautaId}/votos"));
+                .andExpect(jsonPath("$.acoes[0].metodo").value("POST"))
+                .andExpect(jsonPath("$.acoes[0].url").value("http://api.test/api/v1/mobile/acoes/votar"));
     }
 
     @Test
@@ -271,7 +273,48 @@ public class ControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tipo").value("SELECAO"))
                 .andExpect(jsonPath("$.opcoes[0].id").value("nova-pauta"))
-                .andExpect(jsonPath("$.opcoes[0].metodo").value("GET"))
+                .andExpect(jsonPath("$.opcoes[0].metodo").value("POST"))
                 .andExpect(jsonPath("$.opcoes[0].url").value("http://api.test/api/v1/mobile/telas/nova-pauta"));
+    }
+
+    @Test
+    public void deveAbrirSessaoPelaAcaoMobileComPautaIdNoBody() throws Exception {
+        when(sessaoService.abrirSessao(eq(1L), any())).thenReturn(SessaoResponse.builder()
+                .id(10L)
+                .pautaId(1L)
+                .dataHoraAbertura(LocalDateTime.of(2026, 8, 8, 9, 0))
+                .dataHoraEncerramento(LocalDateTime.of(2026, 8, 8, 9, 5))
+                .build());
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("pautaId", 1L);
+        request.put("duracaoMinutos", 5);
+
+        mockMvc.perform(post("/api/v1/mobile/acoes/abrir-sessao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pautaId").value(1));
+    }
+
+    @Test
+    public void deveConsultarResultadoPelaAcaoMobileComPautaIdNoBody() throws Exception {
+        when(votoService.obterResultado(1L)).thenReturn(new ResultadoVotacaoResponse(
+                1L,
+                "Pauta teste",
+                3L,
+                1L,
+                4L,
+                "APROVADA"
+        ));
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("pautaId", 1L);
+
+        mockMvc.perform(post("/api/v1/mobile/acoes/consultar-resultado")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultado").value("APROVADA"));
     }
 }

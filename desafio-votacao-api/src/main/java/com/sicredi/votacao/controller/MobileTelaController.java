@@ -5,8 +5,8 @@ import com.sicredi.votacao.dto.mobile.MobileCampoResponse;
 import com.sicredi.votacao.dto.mobile.MobileOpcaoResponse;
 import com.sicredi.votacao.dto.mobile.MobileTelaResponse;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
@@ -24,7 +24,7 @@ public class MobileTelaController {
         this.callbackBaseUrl = removerBarraFinal(callbackBaseUrl);
     }
 
-    @GetMapping("/nova-pauta")
+    @RequestMapping(value = "/nova-pauta", method = {RequestMethod.GET, RequestMethod.POST})
     public MobileTelaResponse novaPauta() {
         return MobileTelaResponse.builder()
                 .id("nova-pauta")
@@ -39,13 +39,13 @@ public class MobileTelaController {
                         "cadastrar",
                         "Cadastrar",
                         "POST",
-                        "/api/v1/pautas",
+                        "/api/v1/mobile/acoes/nova-pauta",
                         Collections.emptyMap()
                 )))
                 .build();
     }
 
-    @GetMapping("/abrir-sessao")
+    @RequestMapping(value = "/abrir-sessao", method = {RequestMethod.GET, RequestMethod.POST})
     public MobileTelaResponse abrirSessao() {
         return MobileTelaResponse.builder()
                 .id("abrir-sessao")
@@ -60,13 +60,13 @@ public class MobileTelaController {
                         "abrir",
                         "Abrir sessao",
                         "POST",
-                        "/api/v1/pautas/{pautaId}/sessao",
+                        "/api/v1/mobile/acoes/abrir-sessao",
                         Collections.emptyMap()
                 )))
                 .build();
     }
 
-    @GetMapping("/votar")
+    @RequestMapping(value = "/votar", method = {RequestMethod.GET, RequestMethod.POST})
     public MobileTelaResponse votar() {
         return MobileTelaResponse.builder()
                 .id("votar")
@@ -83,13 +83,13 @@ public class MobileTelaController {
                         "votar",
                         "Enviar voto",
                         "POST",
-                        "/api/v1/pautas/{pautaId}/votos",
+                        "/api/v1/mobile/acoes/votar",
                         Collections.emptyMap()
                 )))
                 .build();
     }
 
-    @GetMapping("/consultar-resultado")
+    @RequestMapping(value = "/consultar-resultado", method = {RequestMethod.GET, RequestMethod.POST})
     public MobileTelaResponse consultarResultado() {
         return MobileTelaResponse.builder()
                 .id("consultar-resultado")
@@ -102,14 +102,14 @@ public class MobileTelaController {
                 .acoes(Collections.singletonList(acao(
                         "consultar",
                         "Consultar",
-                        "GET",
-                        "/api/v1/pautas/{pautaId}/resultado",
+                        "POST",
+                        "/api/v1/mobile/acoes/consultar-resultado",
                         Collections.emptyMap()
                 )))
                 .build();
     }
 
-    @GetMapping("/opcoes")
+    @RequestMapping(value = "/opcoes", method = {RequestMethod.GET, RequestMethod.POST})
     public MobileTelaResponse opcoes() {
         return MobileTelaResponse.builder()
                 .id("opcoes")
@@ -156,7 +156,7 @@ public class MobileTelaController {
         return MobileOpcaoResponse.builder()
                 .id(id)
                 .rotulo(rotulo)
-                .metodo("GET")
+                .metodo("POST")
                 .url(url(url))
                 .body(body)
                 .build();
