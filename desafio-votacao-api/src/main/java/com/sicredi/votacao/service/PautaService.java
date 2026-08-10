@@ -8,6 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class PautaService {
 
@@ -32,6 +35,19 @@ public class PautaService {
 
         logger.info("Pauta cadastrada com sucesso. pautaId={}", pauta.getId());
 
+        return toResponse(pauta);
+    }
+
+    public List<PautaResponse> listar() {
+        logger.info("Listando pautas cadastradas");
+
+        return repository.findAllByOrderByDataCriacaoDesc()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    private PautaResponse toResponse(Pauta pauta) {
         return PautaResponse.builder()
                 .id(pauta.getId())
                 .titulo(pauta.getTitulo())
