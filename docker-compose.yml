@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: desafio-votacao-postgres
+    environment:
+      POSTGRES_DB: desafio_votacao
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: senha
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d desafio_votacao"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./desafio-votacao-api
+    container_name: desafio-votacao-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/desafio_votacao
+      DB_USERNAME: postgres
+      DB_PASSWORD: senha
+      SERVER_PORT: 8080
+      APP_CALLBACK_BASE_URL: http://localhost:8080
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-data:
