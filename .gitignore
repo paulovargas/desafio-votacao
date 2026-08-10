@@ -1,6 +1,10 @@
 target/
+node_modules/
+.angular/
+www/
 data/
 *.log
+*.pid
 .env
 .env.*
 !.env.example
