@@ -14,100 +14,32 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(PautaNaoEncontradaException.class)
-    public ResponseEntity<ErroResponse> handlePautaNaoEncontrada(
-            PautaNaoEncontradaException exception,
-            WebRequest request){
-
-        return criarResposta(
-                HttpStatus.NOT_FOUND,
-                exception.getMessage(),
-                request
-        );
+    @ExceptionHandler({
+            PautaNaoEncontradaException.class,
+            SessaoNaoEncontradaException.class,
+            CpfInvalidoException.class
+    })
+    public ResponseEntity<ErroResponse> handleNotFound(RuntimeException exception, WebRequest request) {
+        return criarResposta(HttpStatus.NOT_FOUND, exception.getMessage(), request);
     }
 
-    @ExceptionHandler(SessaoNaoEncontradaException.class)
-    public ResponseEntity<ErroResponse> handleSessaoNaoEncontrada(
-            SessaoNaoEncontradaException exception,
-            WebRequest request){
-
-        return criarResposta(
-                HttpStatus.NOT_FOUND,
-                exception.getMessage(),
-                request
-        );
-    }
-
-    @ExceptionHandler(SessaoJaExisteException.class)
-    public ResponseEntity<ErroResponse> handleSessaoJaExiste(
-            SessaoJaExisteException exception,
-            WebRequest request){
-
-        return criarResposta(
-                HttpStatus.CONFLICT,
-                exception.getMessage(),
-                request
-        );
-    }
-
-    @ExceptionHandler(SessaoEncerradaException.class)
-    public ResponseEntity<ErroResponse> handleSessaoEncerrada(
-            SessaoEncerradaException exception,
-            WebRequest request){
-
-        return criarResposta(
-                HttpStatus.CONFLICT,
-                exception.getMessage(),
-                request
-        );
-    }
-
-    @ExceptionHandler(AssociadoJaVotouException.class)
-    public ResponseEntity<ErroResponse> handleAssociadoJaVotou(
-            AssociadoJaVotouException exception,
-            WebRequest request){
-
-        return criarResposta(
-                HttpStatus.CONFLICT,
-                exception.getMessage(),
-                request
-        );
-    }
-
-    @ExceptionHandler(CpfInvalidoException.class)
-    public ResponseEntity<ErroResponse> handleCpfInvalido(
-            CpfInvalidoException exception,
-            WebRequest request){
-
-        return criarResposta(
-                HttpStatus.NOT_FOUND,
-                exception.getMessage(),
-                request
-        );
+    @ExceptionHandler({
+            SessaoJaExisteException.class,
+            SessaoEncerradaException.class,
+            AssociadoJaVotouException.class
+    })
+    public ResponseEntity<ErroResponse> handleConflict(RuntimeException exception, WebRequest request) {
+        return criarResposta(HttpStatus.CONFLICT, exception.getMessage(), request);
     }
 
     @ExceptionHandler(AssociadoNaoPodeVotarException.class)
-    public ResponseEntity<ErroResponse> handleAssociadoNaoPodeVotar(
-            AssociadoNaoPodeVotarException exception,
-            WebRequest request){
-
-        return criarResposta(
-                HttpStatus.FORBIDDEN,
-                exception.getMessage(),
-                request
-        );
+    public ResponseEntity<ErroResponse> handleForbidden(RuntimeException exception, WebRequest request) {
+        return criarResposta(HttpStatus.FORBIDDEN, exception.getMessage(), request);
     }
 
     @ExceptionHandler(DuracaoSessaoInvalidaException.class)
-    public ResponseEntity<ErroResponse> handleDuracaoSessaoInvalida(
-            DuracaoSessaoInvalidaException exception,
-            WebRequest request){
-
-        return criarResposta(
-                HttpStatus.BAD_REQUEST,
-                exception.getMessage(),
-                request
-        );
+    public ResponseEntity<ErroResponse> handleBadRequest(RuntimeException exception, WebRequest request) {
+        return criarResposta(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

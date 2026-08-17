@@ -55,6 +55,28 @@ Opcional:
 - Docker, caso prefira subir o PostgreSQL em container.
 - Docker Compose, caso prefira subir API e PostgreSQL juntos.
 
+## Execucao rapida recomendada
+
+O caminho principal de validacao da entrega e subir tudo pela raiz do repositorio:
+
+```bash
+docker-compose up --build
+```
+
+Em ambientes com Docker Compose v2, o comando equivalente e:
+
+```bash
+docker compose up --build
+```
+
+Depois que a API iniciar, valide com:
+
+```bash
+curl http://localhost:8080/api/v1/pautas
+```
+
+O retorno esperado em uma base vazia e `[]`.
+
 ## Configuracao local
 
 Clone o repositorio, entre na pasta raiz do projeto e depois no modulo da API:
@@ -110,6 +132,8 @@ Esse comando cria:
 - `desafio-votacao-api`: API Spring Boot acessivel em `http://localhost:8080`.
 
 As migrations do Flyway sao executadas automaticamente quando a API inicia.
+
+No Compose, a API usa o profile `docker`, definido em `application-docker.yml`, e recebe as credenciais do PostgreSQL por variaveis de ambiente. Nao e necessario criar `.env` para esse modo.
 
 Para parar os containers:
 
@@ -456,11 +480,13 @@ Regras:
 - A pauta precisa existir.
 - A pauta precisa ter sessao aberta.
 - A sessao nao pode estar encerrada.
-- O CPF e validado por um client fake.
+- O CPF e validado por um client fake deterministico.
 - CPF invalido retorna `404 Not Found`.
 - CPF valido pode retornar `ABLE_TO_VOTE` ou `UNABLE_TO_VOTE`.
 - Quando o retorno for `UNABLE_TO_VOTE`, o voto e rejeitado com `403 Forbidden`.
 - O mesmo associado so pode votar uma vez por pauta.
+
+Para facilitar testes manuais, o fake considera CPFs com 11 digitos como validos. CPFs terminados em digito par retornam `ABLE_TO_VOTE`; CPFs terminados em digito impar retornam `UNABLE_TO_VOTE`.
 
 ### Obter resultado da votacao
 

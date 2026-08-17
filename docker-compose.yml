@@ -24,6 +24,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPRING_PROFILES_ACTIVE: docker
       DB_URL: jdbc:postgresql://postgres:5432/desafio_votacao
       DB_USERNAME: postgres
       DB_PASSWORD: senha
